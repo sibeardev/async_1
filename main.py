@@ -22,7 +22,13 @@ def draw(canvas):
 
     # Add the blinking animation coroutines to the list of coroutines
     coroutines = [
-        blink(canvas, randint(1, height - 2), randint(1, width - 2), choice(symbols))
+        blink(
+            canvas=canvas,
+            row=randint(1, height - 2),
+            column=randint(1, width - 2),
+            delay=randint(1, 10),
+            symbol=choice(symbols),
+        )
         for _ in range(100)
     ]
     # Add the spaceship animation coroutine to the list of coroutines
@@ -41,9 +47,9 @@ def draw(canvas):
         time.sleep(TIC_TIMEOUT)
 
 
-async def blink(canvas, row, column, symbol="*"):
+async def blink(canvas, row, column, delay, symbol="*"):
     """Display blinking symbol at given coordinates with random delays."""
-    for _ in range(randint(1, 10)):
+    for _ in range(delay):
         await asyncio.sleep(0)
     while True:
         canvas.addstr(row, column, symbol, curses.A_DIM)
