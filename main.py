@@ -108,17 +108,18 @@ async def animate_spaceship(canvas, start_row, start_column):
 
     while True:
         for rocket_frame in cycle(rocket_frames):
-            rows_direction, columns_direction, space_pressed = read_controls(canvas)
+            for _ in range(2):
+                rows_direction, columns_direction, space_pressed = read_controls(canvas)
 
-            new_row = start_row + (rows_direction * ROCKET_SPEED)
-            new_column = start_column + (columns_direction * ROCKET_SPEED)
+                new_row = start_row + (rows_direction * ROCKET_SPEED)
+                new_column = start_column + (columns_direction * ROCKET_SPEED)
 
-            start_row = min(max(1, new_row), rows - rocket_height - 1)
-            start_column = min(max(1, new_column), columns - rocket_width - 1)
+                start_row = min(max(1, new_row), rows - rocket_height - 1)
+                start_column = min(max(1, new_column), columns - rocket_width - 1)
 
-            draw_frame(canvas, start_row, start_column, rocket_frame)
-            await asyncio.sleep(0)
-            draw_frame(canvas, start_row, start_column, rocket_frame, negative=True)
+                draw_frame(canvas, start_row, start_column, rocket_frame)
+                await asyncio.sleep(0)
+                draw_frame(canvas, start_row, start_column, rocket_frame, negative=True)
 
 
 def get_rocket_frames():
