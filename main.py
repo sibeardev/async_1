@@ -13,6 +13,8 @@ ROCKET_SPEED = 10
 
 def draw(canvas):
     """Main drawing function that initializes and runs the animation."""
+    global coroutines
+
     curses.curs_set(False)
     canvas.border()
     canvas.nodelay(True)
@@ -31,6 +33,8 @@ def draw(canvas):
         )
         for _ in range(100)
     ]
+    # Add the garbage fly animation coroutine to the list of coroutines
+    coroutines.append(fill_in_garbage(canvas))
     # Add the spaceship animation coroutine to the list of coroutines
     coroutines.append(animate_spaceship(canvas, int(height / 2), int(width / 2)))
 
@@ -98,10 +102,46 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0
         column += columns_speed
 
 
+async def fill_in_garbage(canvas):
+    """
+    Continuously generate and add garbage (trash) objects to the canvas.
+    """
+
+    _, width = canvas.getmaxyx()
+    garbage_frames = read_frames("trash")
+    while True:
+        trash = fly_garbage(
+            canvas,
+            randint(2, width - 2),
+            choice(garbage_frames),
+        )
+        await asyncio.sleep(0)
+        coroutines.append(trash)
+        await asyncio.sleep(0)
+
+
+async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
+    """
+    Animate garbage, flying from top to bottom.
+    Column position will stay same, as specified on start.
+    """
+    rows_number, columns_number = canvas.getmaxyx()
+
+    column = max(column, 0)
+    column = min(column, columns_number - 1)
+
+    row = 0
+    while row < rows_number:
+        draw_frame(canvas, row, column, garbage_frame)
+        await asyncio.sleep(0)
+        draw_frame(canvas, row, column, garbage_frame, negative=True)
+        row += speed
+
+
 async def animate_spaceship(canvas, start_row, start_column):
     """Animate spaceship on the canvas."""
 
-    rocket_frames = get_rocket_frames()
+    rocket_frames = read_frames("rocket")
     rocket_height, rocket_width = get_frame_size(rocket_frames[0])
     rows, columns = canvas.getmaxyx()
 
@@ -121,12 +161,20 @@ async def animate_spaceship(canvas, start_row, start_column):
                 draw_frame(canvas, start_row, start_column, rocket_frame, negative=True)
 
 
-def get_rocket_frames():
-    """Read rocket frames from files in frames directory and return them"""
+def read_frames(frame_type: str) -> list:
+    """
+    Read frames from files in the frames directory and return them as a list.
+
+    Args:
+        frame_type (str): Type of frames to read. Can be either 'rocket' or 'trash'.
+
+    Returns:
+        list: A list of strings, where each string represents the content of a frame file.
+    """
     frames = []
     directory = "frames"
     for filename in sorted(os.listdir(directory)):
-        if filename.startswith("rocket"):
+        if filename.startswith(frame_type):
             with open(os.path.join(directory, filename), "r", encoding="utf-8") as file:
                 frames.append(file.read())
 
