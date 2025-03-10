@@ -56,20 +56,13 @@ async def blink(canvas, row, column, delay, symbol="*"):
         await asyncio.sleep(0)
     while True:
         canvas.addstr(row, column, symbol, curses.A_DIM)
-        for _ in range(20):
-            await asyncio.sleep(0)
-
+        await sleep(20)
         canvas.addstr(row, column, symbol)
-        for _ in range(3):
-            await asyncio.sleep(0)
-
+        await sleep(3)
         canvas.addstr(row, column, symbol, curses.A_BOLD)
-        for _ in range(5):
-            await asyncio.sleep(0)
-
+        await sleep(5)
         canvas.addstr(row, column, symbol)
-        for _ in range(3):
-            await asyncio.sleep(0)
+        await sleep(3)
 
 
 async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
@@ -179,6 +172,12 @@ def read_frames(frame_type: str) -> list:
                 frames.append(file.read())
 
     return frames
+
+
+async def sleep(tics=1):
+    """Pause the execution of a coroutine for a specified number of tics"""
+    for _ in range(tics):
+        await asyncio.sleep(0)
 
 
 if __name__ == "__main__":
