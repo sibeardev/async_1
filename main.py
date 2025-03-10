@@ -16,7 +16,6 @@ def draw(canvas):
     global coroutines
 
     curses.curs_set(False)
-    canvas.border()
     canvas.nodelay(True)
 
     symbols = ["+", "*", ".", ":", "-"]
@@ -46,6 +45,7 @@ def draw(canvas):
                 coroutines.remove(coroutine)
         if len(coroutines) == 0:
             break
+        canvas.border()
         canvas.refresh()
         time.sleep(TIC_TIMEOUT)
 
