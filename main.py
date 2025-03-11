@@ -6,9 +6,9 @@ from itertools import cycle
 from random import choice, randint
 
 from curses_tools import draw_frame, get_frame_size, read_controls
+from physics import update_speed
 
 TIC_TIMEOUT = 0.1
-ROCKET_SPEED = 10
 
 
 def draw(canvas):
@@ -137,14 +137,18 @@ async def animate_spaceship(canvas, start_row, start_column):
     rocket_frames = read_frames("rocket")
     rocket_height, rocket_width = get_frame_size(rocket_frames[0])
     rows, columns = canvas.getmaxyx()
+    row_speed, column_speed = (0, 0)
 
     while True:
         for rocket_frame in cycle(rocket_frames):
             for _ in range(2):
                 rows_direction, columns_direction, space_pressed = read_controls(canvas)
+                row_speed, column_speed = update_speed(
+                    row_speed, column_speed, rows_direction, columns_direction
+                )
 
-                new_row = start_row + (rows_direction * ROCKET_SPEED)
-                new_column = start_column + (columns_direction * ROCKET_SPEED)
+                new_row = start_row + rows_direction + row_speed
+                new_column = start_column + columns_direction + column_speed
 
                 start_row = min(max(1, new_row), rows - rocket_height - 1)
                 start_column = min(max(1, new_column), columns - rocket_width - 1)
