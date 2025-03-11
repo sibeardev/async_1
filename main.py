@@ -6,6 +6,7 @@ from itertools import cycle
 from random import choice, randint
 
 from curses_tools import draw_frame, get_frame_size, read_controls
+from obstacles import Obstacle
 from physics import update_speed
 
 TIC_TIMEOUT = 0.1
@@ -13,13 +14,14 @@ TIC_TIMEOUT = 0.1
 
 def draw(canvas):
     """Main drawing function that initializes and runs the animation."""
-    global coroutines
+    global coroutines, obstacles
 
     curses.curs_set(False)
     canvas.nodelay(True)
 
     symbols = ["+", "*", ".", ":", "-"]
     height, width = canvas.getmaxyx()
+    obstacles = []
 
     # Add the blinking animation coroutines to the list of coroutines
     coroutines = [
@@ -131,12 +133,20 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
     column = max(column, 0)
     column = min(column, columns_number - 1)
 
+    obstacle_width, obstacle_height = get_frame_size(garbage_frame)
+    obstacle = Obstacle(0, column, obstacle_width, obstacle_height)
+    obstacles.append(obstacle)
+
     row = 0
-    while row < rows_number:
-        draw_frame(canvas, row, column, garbage_frame)
-        await asyncio.sleep(0)
-        draw_frame(canvas, row, column, garbage_frame, negative=True)
-        row += speed
+    try:
+        while row < rows_number:
+            draw_frame(canvas, row, column, garbage_frame)
+            await asyncio.sleep(0)
+            draw_frame(canvas, row, column, garbage_frame, negative=True)
+            row += speed
+            obstacle.row = row
+    finally:
+        obstacles.remove(obstacle)
 
 
 async def animate_spaceship(canvas, start_row, start_column):
