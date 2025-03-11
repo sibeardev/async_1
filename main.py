@@ -193,6 +193,27 @@ async def animate_spaceship(canvas, start_row, start_column):
                 await asyncio.sleep(0)
                 draw_frame(canvas, start_row, start_column, rocket_frame, negative=True)
 
+                for obstacle in obstacles:
+                    if obstacle.has_collision(start_row, start_column):
+                        await explode(canvas, start_row, start_column)
+                        await show_gameover(canvas)
+                        return
+
+
+async def show_gameover(canvas):
+    """Show Game Over if spaceship collision with garbage has been"""
+
+    gameover_frame, *_ = read_frames("game_over")
+    gameover_height, gameover_width = get_frame_size(gameover_frame)
+    rows_number, columns_number = canvas.getmaxyx()
+
+    gameover_row = rows_number / 2 - gameover_height / 2
+    gameover_column = columns_number / 2 - gameover_width / 2
+
+    while True:
+        draw_frame(canvas, gameover_row, gameover_column, gameover_frame)
+        await asyncio.sleep(0)
+
 
 def read_frames(frame_type: str) -> list:
     """
