@@ -14,14 +14,14 @@ TIC_TIMEOUT = 0.1
 
 def draw(canvas):
     """Main drawing function that initializes and runs the animation."""
-    global coroutines, obstacles
+    global coroutines, obstacles, obstacles_in_last_collisions
 
     curses.curs_set(False)
     canvas.nodelay(True)
 
     symbols = ["+", "*", ".", ":", "-"]
     height, width = canvas.getmaxyx()
-    obstacles = []
+    obstacles, obstacles_in_last_collisions = [], []
 
     # Add the blinking animation coroutines to the list of coroutines
     coroutines = [
@@ -106,6 +106,7 @@ async def fire(
 
         for obstacle in obstacles:
             if obstacle.has_collision(row, column):
+                obstacles_in_last_collisions.append(obstacle)
                 return
 
 
@@ -149,6 +150,10 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
             draw_frame(canvas, row, column, garbage_frame, negative=True)
             row += speed
             obstacle.row = row
+
+            if obstacle in obstacles_in_last_collisions:
+                obstacles_in_last_collisions.remove(obstacle)
+                break
     finally:
         obstacles.remove(obstacle)
 
