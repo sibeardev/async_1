@@ -7,6 +7,7 @@ from random import choice, randint
 
 from curses_tools import draw_frame, get_frame_size, read_controls
 from explosion import explode
+from game_scenario import PHRASES, get_garbage_delay_tics
 from obstacles import Obstacle
 from physics import update_speed
 
@@ -15,7 +16,7 @@ TIC_TIMEOUT = 0.1
 
 def draw(canvas):
     """Main drawing function that initializes and runs the animation."""
-    global coroutines, obstacles, obstacles_in_last_collisions
+    global coroutines, obstacles, obstacles_in_last_collisions, year, gameover
 
     curses.curs_set(False)
     canvas.nodelay(True)
@@ -23,6 +24,8 @@ def draw(canvas):
     symbols = ["+", "*", ".", ":", "-"]
     height, width = canvas.getmaxyx()
     obstacles, obstacles_in_last_collisions = [], []
+    year = 1957
+    gameover = False
 
     # Add the blinking animation coroutines to the list of coroutines
     coroutines = [
@@ -35,6 +38,10 @@ def draw(canvas):
         )
         for _ in range(100)
     ]
+
+    coroutines.append(count_years())
+    coroutines.append(show_game_info(canvas))
+
     # Add the garbage fly animation coroutine to the list of coroutines
     coroutines.append(fill_in_garbage(canvas))
     # Add the spaceship animation coroutine to the list of coroutines
@@ -119,13 +126,15 @@ async def fill_in_garbage(canvas):
     _, width = canvas.getmaxyx()
     garbage_frames = read_frames("trash")
     while True:
-        trash = fly_garbage(
-            canvas,
-            randint(2, width - 2),
-            choice(garbage_frames),
-        )
-        await asyncio.sleep(0)
-        coroutines.append(trash)
+        garbage_delay_tics = get_garbage_delay_tics(year)
+        if garbage_delay_tics is not None:
+            trash = fly_garbage(
+                canvas,
+                randint(2, width - 2),
+                choice(garbage_frames),
+            )
+            coroutines.append(trash)
+            await sleep(garbage_delay_tics)
         await asyncio.sleep(0)
 
 
@@ -164,6 +173,7 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
 
 async def animate_spaceship(canvas, start_row, start_column):
     """Animate spaceship on the canvas."""
+    global gameover
 
     rocket_frames = read_frames("rocket")
     rocket_height, rocket_width = get_frame_size(rocket_frames[0])
@@ -184,7 +194,7 @@ async def animate_spaceship(canvas, start_row, start_column):
                 start_row = min(max(1, new_row), rows - rocket_height - 1)
                 start_column = min(max(1, new_column), columns - rocket_width - 1)
 
-                if space_pressed:
+                if space_pressed and year > 2020:
                     coroutines.append(
                         fire(canvas, start_row, start_column, column_correction=2)
                     )
@@ -195,6 +205,7 @@ async def animate_spaceship(canvas, start_row, start_column):
 
                 for obstacle in obstacles:
                     if obstacle.has_collision(start_row, start_column):
+                        gameover = True
                         await explode(canvas, start_row, start_column)
                         await show_gameover(canvas)
                         return
@@ -212,6 +223,30 @@ async def show_gameover(canvas):
 
     while True:
         draw_frame(canvas, gameover_row, gameover_column, gameover_frame)
+        await asyncio.sleep(0)
+
+
+async def count_years():
+    """Increment the global year counter every 1.5 sec"""
+    global year
+
+    while True:
+        await sleep(15)
+        if not gameover:
+            year += 1
+
+
+async def show_game_info(canvas):
+    """Display game information (current year and associated phrase) on the canvas"""
+    rows, _ = canvas.getmaxyx()
+    game_info = canvas.derwin(rows - 2, 2)
+    phrase = ""
+    while True:
+        if year in PHRASES:
+            phrase = PHRASES[year]
+        game_info.clrtoeol()
+        game_info.addstr(0, 0, f"{year}: {phrase}")
+        game_info.noutrefresh()
         await asyncio.sleep(0)
 
 
