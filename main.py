@@ -65,10 +65,18 @@ async def blink(canvas, row, column, delay, symbol="*"):
         await sleep(3)
 
 
-async def fire(canvas, start_row, start_column, rows_speed=-0.3, columns_speed=0):
+async def fire(
+    canvas,
+    start_row,
+    start_column,
+    row_correction=0,
+    column_correction=0,
+    rows_speed=-2,
+    columns_speed=0,
+):
     """Display animation of gun shot, direction and speed can be specified."""
 
-    row, column = start_row, start_column
+    row, column = start_row + row_correction, start_column + column_correction
 
     canvas.addstr(round(row), round(column), "*")
     await asyncio.sleep(0)
@@ -152,6 +160,11 @@ async def animate_spaceship(canvas, start_row, start_column):
 
                 start_row = min(max(1, new_row), rows - rocket_height - 1)
                 start_column = min(max(1, new_column), columns - rocket_width - 1)
+
+                if space_pressed:
+                    coroutines.append(
+                        fire(canvas, start_row, start_column, column_correction=2)
+                    )
 
                 draw_frame(canvas, start_row, start_column, rocket_frame)
                 await asyncio.sleep(0)
