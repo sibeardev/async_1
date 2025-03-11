@@ -6,6 +6,7 @@ from itertools import cycle
 from random import choice, randint
 
 from curses_tools import draw_frame, get_frame_size, read_controls
+from explosion import explode
 from obstacles import Obstacle
 from physics import update_speed
 
@@ -152,6 +153,9 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
             obstacle.row = row
 
             if obstacle in obstacles_in_last_collisions:
+                explosion_row = obstacle.row + int(obstacle_width / 2)
+                explosion_column = obstacle.column + int(obstacle_height / 2)
+                await explode(canvas, explosion_row, explosion_column)
                 obstacles_in_last_collisions.remove(obstacle)
                 break
     finally:
